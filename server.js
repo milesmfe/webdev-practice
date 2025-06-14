@@ -1,19 +1,12 @@
-const https = require("https");
+const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const app = require("./pages/app");
 
 global.sessions = {};
 
-// SSL certificate options
-// Make sure you have these files or generate them for local development
-const options = {
-  key: fs.readFileSync(path.join(__dirname, "key.pem")), // Replace with your key file
-  cert: fs.readFileSync(path.join(__dirname, "cert.pem")), // Replace with your certificate file
-};
-
-https.createServer(options, async (req, res) => {
-  const parsed = new URL(req.url, `https://${req.headers.host}`);
+http.createServer(async (req, res) => {
+  const parsed = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsed.pathname;
 
   // Serve static files
@@ -54,4 +47,4 @@ https.createServer(options, async (req, res) => {
     res.writeHead(404);
     res.end("Page not found");
   }
-}).listen(3001, () => console.log("Server running on https://localhost:3001"));
+}).listen(3000, () => console.log("Server running on http://localhost:3000"));

@@ -14,7 +14,7 @@ exports.wrap = function (body, meta = {}, req) {
 <html>
   <head>
     <title>${escapeHtml(meta.title || "Untitled")}</title>
-    <link rel="stylesheet" href="/public/style.css">
+    <link rel="stylesheet" href="public/style.css">
   </head>
   <body>
     <div class="container">
