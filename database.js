@@ -2,9 +2,12 @@ const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("database.db");
 
 function getUserByName(name) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.get("SELECT * FROM users WHERE name = ?", [name], (err, row) => {
-      resolve(row);
+      if (err) {
+        return reject(err); // Reject on database error
+      }
+      resolve(row); // row will be undefined if not found, which is expected
     });
   });
 }

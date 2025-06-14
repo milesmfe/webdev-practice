@@ -14,20 +14,25 @@ exports.render = async function (query, req, res) {
         const name = params.get("name");
         const pass = params.get("password");
 
-        const user = await getUserByName(name);
-        if (user && await bcrypt.compare(pass, user.password)) {
-          const token = crypto.randomBytes(32).toString("hex");
-          global.sessions[token] = name;
+        try {
+          const user = await getUserByName(name);
+          if (user && await bcrypt.compare(pass, user.password)) {
+            const token = crypto.randomBytes(32).toString("hex");
+            global.sessions[token] = name;
 
-          res.setHeader("Set-Cookie", `session=${token}; HttpOnly; Path=/`);
-          resolve(`<p>Login successful! <a href="/profile">Go to profile</a></p>`);
-        } else {
+            // Add Secure and SameSite attributes
+            res.setHeader("Set-Cookie", `session=${token}; HttpOnly; Path=/; Secure; SameSite=Lax`);
+            resolve(`<p>Login successful! <a href="/profile">Go to profile</a></p>`);
+          } else {
+            resolve(`<p>Login failed. <a href="/login">Try again</a></p>`);
+          }
+        } catch (dbError) {
+          console.error("Login error - database issue:", dbError);
           resolve(`<p>Login failed. <a href="/login">Try again</a></p>`);
         }
       });
     });
   }
-
   return `
     <form method="POST">
       <input name="name" placeholder="Username">

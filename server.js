@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const app = require("./pages/app");
 
-
 global.sessions = {};
 
 http.createServer(async (req, res) => {
@@ -21,14 +20,30 @@ http.createServer(async (req, res) => {
     }
   }
 
-  const route = pathname === "/" ? "index" : pathname.slice(1);
+  // Whitelist of allowed page modules to prevent arbitrary file inclusion
+  const allowedPageModules = {
+    "/": "index",
+    "/login": "login",
+    "/register": "register",
+    "/profile": "profile",
+    "/logout": "logout",
+    // Add other valid page routes here, ensure no leading/trailing slashes in keys if matching `pathname` directly
+  };
+
+  const routeModuleKey = allowedPageModules[pathname];
+
   try {
-    const page = require(`./pages/${route}.js`);
+    if (!routeModuleKey) {
+      // This specific error will be caught by the generic catch block below
+      throw new Error(`Page not found for pathname: ${pathname}`);
+    }
+    const page = require(`./pages/${routeModuleKey}.js`);
     const html = await page.render(parsed.query, req, res);
     const wrapped = app.wrap(html, page.meta || {}, req);
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(wrapped);
   } catch (err) {
+    console.error(`Error processing request for ${pathname}:`, err.message); // Log specific error for better debugging
     res.writeHead(404);
     res.end("Page not found");
   }
