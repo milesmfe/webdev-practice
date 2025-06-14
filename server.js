@@ -1,39 +1,35 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const app = require("./pages/app");
 
-const PAGES_DIR = path.join(__dirname, 'pages');
-const appWrapper = require(path.join(PAGES_DIR, 'app.js'));
+
+global.sessions = {};
 
 http.createServer(async (req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = parsedUrl.pathname;
-  const query = Object.fromEntries(parsedUrl.searchParams.entries());
+  const parsed = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = parsed.pathname;
 
-  // Static file serving
-  if (pathname.startsWith('/public/')) {
-    const file = path.join(__dirname, pathname);
-    return fs.readFile(file, (err, data) => {
-      if (err) return res.writeHead(404).end('Not found');
-      const type = { '.css': 'text/css', '.js': 'application/javascript' }[path.extname(file)] || 'text/plain';
-      res.writeHead(200, { 'Content-Type': type });
-      res.end(data);
-    });
+  // Serve static files
+  if (pathname.startsWith("/public/")) {
+    const filePath = path.join(__dirname, pathname);
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200);
+      return fs.createReadStream(filePath).pipe(res);
+    } else {
+      res.writeHead(404); return res.end("Not found");
+    }
   }
 
-  // Page module loading
-  const name = pathname === '/' ? 'index' : pathname.slice(1);
-  const file = path.join(PAGES_DIR, `${name}.js`);
-
-  if (fs.existsSync(file)) {
-    delete require.cache[require.resolve(file)];
-    const page = require(file);
-    const content = await page.render({ query });
-    const html = appWrapper.wrap(content, page.meta || {});
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(html);
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/html' });
-    res.end('<h1>404 Not Found</h1>');
+  const route = pathname === "/" ? "index" : pathname.slice(1);
+  try {
+    const page = require(`./pages/${route}.js`);
+    const html = await page.render(parsed.query, req, res);
+    const wrapped = app.wrap(html, page.meta || {}, req);
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(wrapped);
+  } catch (err) {
+    res.writeHead(404);
+    res.end("Page not found");
   }
-}).listen(3000, () => console.log('Server at http://localhost:3000'));
+}).listen(3000, () => console.log("Server running on http://localhost:3000"));

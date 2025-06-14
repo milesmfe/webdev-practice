@@ -1,12 +1,13 @@
-const db = require('../database');
-exports.meta = { title: 'Profile' };
+exports.meta = { title: "Profile" };
 
-exports.render = async ({ query }) => {
-  const user = await db.getUser(query.name || '');
-  if (!user) return `<h1>User not found</h1><a href="/">Back</a>`;
-  return `
-    <h1>Hello, ${user.name}</h1>
-    <p>Your favorite color is <span style="color:${user.favorite_color}">${user.favorite_color}</span>.</p>
-    <a href="/">Back</a>
-  `;
+exports.render = async function (query, req) {
+  const cookies = require("cookie").parse(req.headers.cookie || "");
+  const session = cookies.session;
+  const user = global.sessions?.[session];
+
+  if (!user) {
+    return `<p>Please <a href="/login">log in</a> to view your profile.</p>`;
+  }
+
+  return `<h1>Welcome, ${user}!</h1><p>This is your private profile page.</p>`;
 };

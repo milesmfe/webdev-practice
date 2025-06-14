@@ -1,9 +1,4 @@
-exports.meta = { title: 'Home' };
-
-exports.render = async () => `
-  <h1>Welcome</h1>
-  <form method="GET" action="/profile">
-    <input name="name" placeholder="Your name" />
-    <button>See Profile</button>
-  </form>
-`;
+exports.meta = { title: "Home" };
+exports.render = async function () {
+  return "<h1>Welcome to the Home Page!</h1>";
+};
